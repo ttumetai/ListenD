@@ -1,0 +1,723 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ListenD - 听歌统计</title>
+    <link rel="stylesheet" href="https://unpkg.com/element-plus/dist/index.css">
+    <link rel="stylesheet" href="https://unpkg.com/@element-plus/icons-vue/dist/index.css">
+    <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+    <script src="https://unpkg.com/element-plus"></script>
+    <script src="https://unpkg.com/@element-plus/icons-vue"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
+    <style>
+        body { 
+            margin: 0;
+            background: #000000;
+            min-height: 100vh;
+        }
+        .gradient-text { 
+            background: linear-gradient(135deg, #06b6d4 0%, #3b82f6 50%, #8b5cf6 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        .glass-card {
+            background: rgba(15, 23, 42, 0.6);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(148, 163, 184, 0.1);
+            border-radius: 20px;
+            transition: all 0.3s ease;
+        }
+        .glass-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 20px 60px rgba(59, 130, 246, 0.3);
+            border-color: rgba(59, 130, 246, 0.4);
+        }
+        .chart-wrapper { height: 300px; }
+        .el-card { background: rgba(15, 23, 42, 0.6) !important; border: 1px solid rgba(148, 163, 184, 0.1) !important; }
+        .el-card__header { color: #f1f5f9 !important; border-bottom: 1px solid rgba(148, 163, 184, 0.1) !important; }
+        .el-card__body { color: #cbd5e1 !important; }
+        .el-button--info.is-plain { background: rgba(15, 23, 42, 0.6) !important; border-color: rgba(148, 163, 184, 0.2) !important; color: #cbd5e1 !important; }
+        .el-button--info.is-plain:hover { background: rgba(30, 41, 59, 0.8) !important; border-color: rgba(59, 130, 246, 0.5) !important; }
+        .el-button.is-circle {
+            background: rgba(15, 23, 42, 0.6) !important;
+            border: 1px solid rgba(148, 163, 184, 0.2) !important;
+            transition: all 0.3s ease !important;
+        }
+        .el-button.is-circle:hover {
+            background: rgba(30, 41, 59, 0.8) !important;
+            border-color: rgba(59, 130, 246, 0.5) !important;
+        }
+        .el-button.is-circle:hover .el-icon {
+            color: #3b82f6 !important;
+        }
+        .el-button--primary { background: rgba(59, 130, 246, 0.8) !important; border: 1px solid rgba(59, 130, 246, 0.5) !important; }
+        .el-button--primary:hover { 
+            background: rgba(59, 130, 246, 1) !important; 
+            border-color: rgba(59, 130, 246, 0.8) !important;
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(59, 130, 246, 0.3) !important;
+        }
+        .el-button--primary:active {
+            transform: translateY(0);
+        }
+        /* Element Plus 日期选择器样式 */
+        .el-date-editor.el-input {
+            background: rgba(15, 23, 42, 0.8) !important;
+            border: 1px solid rgba(148, 163, 184, 0.3) !important;
+            border-radius: 8px !important;
+        }
+        .el-date-editor.el-input:hover {
+            border-color: rgba(59, 130, 246, 0.5) !important;
+        }
+        .el-date-editor.el-input.is-focus {
+            border-color: #3b82f6 !important;
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1) !important;
+        }
+        .el-date-editor .el-input__wrapper {
+            background: transparent !important;
+            box-shadow: none !important;
+            border: none !important;
+            padding: 4px 8px !important;
+        }
+        .el-date-editor .el-input__inner {
+            color: #f1f5f9 !important;
+        }
+        .el-date-editor .el-input__prefix {
+            color: #94a3b8 !important;
+        }
+        .el-date-editor .el-input__suffix {
+            color: #94a3b8 !important;
+        }
+        /* 日期选择器弹出面板 */
+        .el-picker__popper {
+            background: rgba(15, 23, 42, 0.98) !important;
+            border: 1px solid rgba(148, 163, 184, 0.3) !important;
+            box-shadow: 0 12px 40px rgba(0, 0, 0, 0.5) !important;
+        }
+        .el-date-picker__header {
+            color: #f1f5f9 !important;
+        }
+        .el-date-picker__header-label {
+            color: #f1f5f9 !important;
+        }
+        .el-date-picker__header-label:hover {
+            color: #3b82f6 !important;
+        }
+        .el-picker-panel__icon-btn {
+            color: #94a3b8 !important;
+        }
+        .el-picker-panel__icon-btn:hover {
+            color: #3b82f6 !important;
+        }
+        .el-date-table th {
+            color: #94a3b8 !important;
+            border-bottom: 1px solid rgba(148, 163, 184, 0.2) !important;
+        }
+        .el-date-table td {
+            color: #cbd5e1 !important;
+        }
+        .el-date-table td.available:hover {
+            color: #3b82f6 !important;
+        }
+        .el-date-table td.current:not(.disabled) {
+            color: #ffffff !important;
+            background: #3b82f6 !important;
+        }
+        .el-date-table td.today span {
+            color: #3b82f6 !important;
+            font-weight: 700 !important;
+        }
+        .el-date-editor { background: rgba(15, 23, 42, 0.6) !important; border-color: rgba(148, 163, 184, 0.2) !important; }
+        .el-input__wrapper { background: rgba(15, 23, 42, 0.6) !important; box-shadow: none !important; border: 1px solid rgba(148, 163, 184, 0.2) !important; }
+        .el-input__inner { color: #cbd5e1 !important; }
+        /* 自定义日期输入框 */
+        .date-input-wrapper {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+        .date-label {
+            font-size: 0.75rem;
+            color: #94a3b8;
+            font-weight: 500;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+        .custom-date-input {
+            padding: 8px 12px;
+            background: rgba(15, 23, 42, 0.8);
+            border: 1px solid rgba(148, 163, 184, 0.3);
+            border-radius: 8px;
+            color: #f1f5f9;
+            font-size: 0.875rem;
+            width: 160px;
+            transition: all 0.3s ease;
+            outline: none;
+        }
+        .custom-date-input:hover {
+            border-color: rgba(59, 130, 246, 0.5);
+            background: rgba(30, 41, 59, 0.8);
+        }
+        .custom-date-input:focus {
+            border-color: #3b82f6;
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+        }
+        .custom-date-input::-webkit-calendar-picker-indicator {
+            filter: invert(0.7);
+            cursor: pointer;
+        }
+        .custom-date-input::-webkit-calendar-picker-indicator:hover {
+            filter: invert(0.9);
+        }
+        .el-range-editor { background: rgba(15, 23, 42, 0.8) !important; border: 1px solid rgba(148, 163, 184, 0.3) !important; }
+        .el-range-editor.el-input__wrapper { background: rgba(15, 23, 42, 0.8) !important; }
+        .el-range-input { background: transparent !important; color: #f1f5f9 !important; }
+        .el-range-separator { color: #cbd5e1 !important; }
+        .el-date-editor .el-range__icon { color: #94a3b8 !important; }
+        .el-date-editor .el-range__close-icon { color: #94a3b8 !important; }
+        .el-icon { color: #94a3b8 !important; }
+        .el-input__prefix-inner { color: #94a3b8 !important; }
+        .el-input__suffix-inner { color: #94a3b8 !important; }
+        /* 强制显示日期选择器 */
+        .el-date-editor.el-input {
+            display: inline-flex !important;
+            width: 300px !important;
+            background: rgba(15, 23, 42, 0.8) !important;
+            border: 1px solid rgba(148, 163, 184, 0.3) !important;
+        }
+        .el-date-editor .el-input__wrapper {
+            background: transparent !important;
+            box-shadow: none !important;
+            border: none !important;
+        }
+        /* 弹出层样式 */
+        .el-picker-panel { background: rgba(15, 23, 42, 0.95) !important; border: 1px solid rgba(148, 163, 184, 0.2) !important; }
+        .el-date-picker__header { color: #f1f5f9 !important; }
+        .el-picker-panel__body { color: #cbd5e1 !important; }
+        .el-date-table th { color: #94a3b8 !important; }
+        .el-date-table td { color: #cbd5e1 !important; }
+        .el-date-table td.available:hover { color: #3b82f6 !important; }
+        .el-date-table td.current:not(.disabled) { color: #3b82f6 !important; }
+        .el-statistic__head { color: #94a3b8 !important; }
+        .el-statistic__number { color: #f1f5f9 !important; }
+        /* Utility Classes */
+        .min-h-screen { min-height: 100vh; }
+        .p-6 { padding: 1.5rem; }
+        .mb-2 { margin-bottom: 0.5rem; }
+        .mb-3 { margin-bottom: 0.75rem; }
+        .mb-4 { margin-bottom: 1rem; }
+        .mb-6 { margin-bottom: 1.5rem; }
+        .mb-8 { margin-bottom: 2rem; }
+        .max-w-7xl { max-width: 80rem; }
+        .mx-auto { margin-left: auto; margin-right: auto; }
+        .text-center { text-align: center; }
+        .text-6xl { font-size: 3.75rem; line-height: 1; }
+        .text-4xl { font-size: 2.25rem; line-height: 2.5rem; }
+        .text-2xl { font-size: 1.5rem; line-height: 2rem; }
+        .text-xl { font-size: 1.25rem; line-height: 1.75rem; }
+        .text-lg { font-size: 1.125rem; line-height: 1.75rem; }
+        .text-sm { font-size: 0.875rem; line-height: 1.25rem; }
+        .font-bold { font-weight: 700; }
+        .font-semibold { font-weight: 600; }
+        .font-medium { font-medium: 500; }
+        .text-slate-100 { color: #f1f5f9; }
+        .text-slate-200 { color: #e2e8f0; }
+        .text-slate-400 { color: #94a3b8; }
+        .text-white { color: #ffffff; }
+        .uppercase { text-transform: uppercase; }
+        .tracking-wider { letter-spacing: 0.05em; }
+        .grid { display: grid; }
+        .grid-cols-1 { grid-template-columns: repeat(1, minmax(0, 1fr)); }
+        .gap-3 { gap: 0.75rem; }
+        .gap-6 { gap: 1.5rem; }
+        .flex { display: flex; }
+        .flex-1 { flex: 1 1 0%; }
+        .flex-wrap { flex-wrap: wrap; }
+        .items-center { align-items: center; }
+        .justify-between { justify-content: space-between; }
+        .py-3 { padding-top: 0.75rem; padding-bottom: 0.75rem; }
+        .py-8 { padding-top: 2rem; padding-bottom: 2rem; }
+        .p-12 { padding: 3rem; }
+        .w-10 { width: 2.5rem; }
+        .border-b { border-bottom-width: 1px; }
+        .border-slate-800 { border-color: #1e293b; }
+        .last\:border-0:last-child { border: 0; }
+        .hover\:pl-2:hover { padding-left: 0.5rem; }
+        .hover\:border-l-2:hover { border-left-width: 2px; }
+        .hover\:border-l-blue-500:hover { border-left-color: #3b82f6; }
+        .hover\:border-l-purple-500:hover { border-left-color: #a855f7; }
+        .hover\:border-l-cyan-500:hover { border-left-color: #06b6d4; }
+        .transition-all { transition-property: all; transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1); transition-duration: 150ms; }
+        @media (min-width: 768px) {
+            .md\:grid-cols-2 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+        }
+        @media (min-width: 1024px) {
+            .lg\:grid-cols-2 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+            .lg\:grid-cols-4 { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+        }
+    </style>
+</head>
+<body class="bg-black">
+    <div id="app" class="min-h-screen p-6">
+        <div class="max-w-7xl mx-auto">
+            <!-- Header -->
+            <div class="text-center mb-8 relative" style="min-height: 120px;">
+                <h1 class="text-6xl font-bold gradient-text mb-2">ListenD</h1>
+                <p class="text-slate-400 text-lg">Music Analytics Dashboard</p>
+            </div>
+
+            <!-- Floating Action Buttons -->
+            <div style="position: fixed; right: 40px; top: 50%; transform: translateY(-50%); z-index: 1000;">
+                <div style="display: flex; flex-direction: column; gap: 12px;">
+                    <el-button 
+                        @click="loadData" 
+                        type="info" 
+                        plain 
+                        size="large"
+                        circle
+                        :loading="loading"
+                        title="刷新数据"
+                        style="margin: 0;"
+                    >
+                        <el-icon v-if="!loading"><refresh-right /></el-icon>
+                    </el-button>
+                    <el-button 
+                        @click="exportImage" 
+                        type="info" 
+                        plain 
+                        size="large"
+                        circle
+                        :loading="exporting"
+                        title="导出截图"
+                        style="margin: 0;"
+                    >
+                        <el-icon v-if="!exporting"><download /></el-icon>
+                    </el-button>
+                </div>
+            </div>
+
+            <!-- Date Picker -->
+            <div class="glass-card p-6 mb-6">
+                <div class="flex flex-wrap items-center gap-3">
+                    <el-button @click="setDateRange('yesterday')" type="info" plain size="default">昨天</el-button>
+                    <el-button @click="setDateRange('today')" type="info" plain size="default">今天</el-button>
+                    <el-button @click="setDateRange('week')" type="info" plain size="default">最近7天</el-button>
+                    <el-button @click="setDateRange('month')" type="info" plain size="default">最近30天</el-button>
+                    <div style="width: 1px; height: 24px; background: rgba(148, 163, 184, 0.3); margin: 0 8px;"></div>
+                    <div class="date-input-wrapper">
+                        <label class="date-label">开始日期</label>
+                        <el-date-picker
+                            v-model="startDate"
+                            type="date"
+                            placeholder="选择日期"
+                            format="YYYY-MM-DD"
+                            value-format="YYYY-MM-DD"
+                            style="width: 160px;"
+                        />
+                    </div>
+                    <span class="text-slate-400">至</span>
+                    <div class="date-input-wrapper">
+                        <label class="date-label">结束日期</label>
+                        <el-date-picker
+                            v-model="endDate"
+                            type="date"
+                            placeholder="选择日期"
+                            format="YYYY-MM-DD"
+                            value-format="YYYY-MM-DD"
+                            style="width: 160px;"
+                        />
+                    </div>
+                    <el-button @click="loadDataFromCustom" type="primary" size="default" :loading="loading">
+                        <el-icon style="margin-right: 4px;" v-if="!loading"><search /></el-icon>
+                        查询
+                    </el-button>
+                </div>
+            </div>
+
+            <!-- Stats Grid -->
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-6">
+                <div v-for="(stat, idx) in stats" :key="stat.title" class="glass-card p-6">
+                    <div class="flex items-center justify-between mb-3">
+                        <div class="text-sm text-slate-400 uppercase tracking-wider font-medium">{{ stat.title }}</div>
+                        <el-icon :size="28" color="#3b82f6">
+                            <component :is="['headset', 'timer', 'circle-check', 'refresh'][idx]" />
+                        </el-icon>
+                    </div>
+                    <div class="text-4xl font-bold text-white">
+                        {{ stat.value }}<span class="text-xl text-slate-400 ml-2">{{ stat.unit }}</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Empty State -->
+            <div v-if="isEmpty" class="glass-card p-12 text-center">
+                <el-icon :size="80" color="#475569" class="mb-4">
+                    <data-analysis />
+                </el-icon>
+                <div class="text-2xl font-semibold text-slate-200 mb-2">暂无数据</div>
+                <div class="text-slate-400">请先运行 main.py 开始记录听歌数据</div>
+            </div>
+
+            <template v-if="!isEmpty">
+                <!-- Charts -->
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+                    <div class="glass-card p-6">
+                        <div class="flex items-center gap-3 mb-4">
+                            <el-icon :size="24" color="#3b82f6">
+                                <trend-charts />
+                            </el-icon>
+                            <h2 class="text-xl font-semibold text-slate-100">每日播放趋势</h2>
+                        </div>
+                        <div class="chart-wrapper">
+                            <canvas ref="dailyChart"></canvas>
+                        </div>
+                    </div>
+                    <div class="glass-card p-6">
+                        <div class="flex items-center gap-3 mb-4">
+                            <el-icon :size="24" color="#3b82f6">
+                                <clock />
+                            </el-icon>
+                            <h2 class="text-xl font-semibold text-slate-100">播放时段分布</h2>
+                        </div>
+                        <div class="chart-wrapper">
+                            <canvas ref="hourlyChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Top Tracks & Artists -->
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+                    <!-- Top Tracks -->
+                    <div class="glass-card p-6">
+                        <div class="flex items-center gap-3 mb-4">
+                            <el-icon :size="24" color="#3b82f6">
+                                <headset />
+                            </el-icon>
+                            <h2 class="text-xl font-semibold text-slate-100">最常听的歌曲</h2>
+                        </div>
+                        <div v-if="topTracks.length === 0" class="text-center py-8 text-slate-400">
+                            该时间段暂无播放数据
+                        </div>
+                        <div v-else>
+                            <div v-for="(track, i) in topTracks" :key="i" 
+                                 class="flex items-center justify-between py-3 border-b border-slate-800 last:border-0 hover:pl-2 hover:border-l-2 hover:border-l-blue-500 transition-all">
+                                <div class="flex items-center flex-1">
+                                    <div class="text-xl font-bold text-white w-10">{{ i + 1 }}</div>
+                                    <div class="flex-1">
+                                        <div class="text-slate-100 font-semibold">{{ track.track }}</div>
+                                        <div class="text-sm text-slate-400">{{ track.artist }} · 完成度 {{ track.avg_completion }}%</div>
+                                    </div>
+                                </div>
+                                <div class="text-lg font-bold text-white">{{ track.play_count }}次</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Top Artists -->
+                    <div class="glass-card p-6">
+                        <div class="flex items-center gap-3 mb-4">
+                            <el-icon :size="24" color="#8b5cf6">
+                                <microphone />
+                            </el-icon>
+                            <h2 class="text-xl font-semibold text-slate-100">最常听的艺术家</h2>
+                        </div>
+                        <div v-if="topArtists.length === 0" class="text-center py-8 text-slate-400">
+                            该时间段暂无播放数据
+                        </div>
+                        <div v-else>
+                            <div v-for="(artist, i) in topArtists" :key="i" 
+                                 class="flex items-center justify-between py-3 border-b border-slate-800 last:border-0 hover:pl-2 hover:border-l-2 hover:border-l-purple-500 transition-all">
+                                <div class="flex items-center flex-1">
+                                    <div class="text-xl font-bold text-white w-10">{{ i + 1 }}</div>
+                                    <div class="flex-1">
+                                        <div class="text-slate-100 font-semibold">{{ artist.artist }}</div>
+                                        <div class="text-sm text-slate-400">{{ artist.total_hours }} 小时</div>
+                                    </div>
+                                </div>
+                                <div class="text-lg font-bold text-white">{{ artist.play_count }}次</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Recent Plays -->
+                <div class="glass-card p-6">
+                    <div class="flex items-center gap-3 mb-4">
+                        <el-icon :size="24" color="#06b6d4">
+                            <clock />
+                        </el-icon>
+                        <h2 class="text-xl font-semibold text-slate-100">最近播放</h2>
+                    </div>
+                    <div v-if="recentPlays.length === 0" class="text-center py-8 text-slate-400">
+                        该时间段暂无播放数据
+                    </div>
+                    <div v-else>
+                        <div v-for="play in recentPlays" :key="play.started_at" 
+                             class="py-3 border-b border-slate-800 last:border-0 hover:pl-2 hover:border-l-2 hover:border-l-cyan-500 transition-all">
+                            <div class="text-slate-100 font-semibold mb-2">{{ play.track }}</div>
+                            <div class="flex flex-wrap gap-3 text-sm text-slate-400">
+                                <span>{{ play.artist }}</span>
+                                <span>{{ play.started_at }}</span>
+                                <span>{{ play.played_duration }}秒</span>
+                                <span>{{ play.completion_rate }}%</span>
+                                <el-tag 
+                                    :type="play.play_type === 'repeat' ? 'danger' : play.play_type === 'skip' ? 'warning' : 'info'" 
+                                    size="small"
+                                >
+                                    {{ play.play_type === 'repeat' ? '循环' : play.play_type === 'skip' ? '跳过' : '正常' }}
+                                </el-tag>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </template>
+        </div>
+    </div>
+
+    <script>
+        const { createApp, ref, onMounted, nextTick } = Vue;
+        const { Headset, Timer, CircleCheck, Refresh, DataAnalysis, TrendCharts, Clock, Microphone, Search, RefreshRight, Download } = ElementPlusIconsVue;
+        
+        createApp({
+            components: {
+                Headset, Timer, CircleCheck, Refresh, DataAnalysis, TrendCharts, Clock, Microphone, Search, RefreshRight, Download
+            },
+            setup() {
+                const dateRange = ref([]);
+                const startDate = ref('');
+                const endDate = ref('');
+                const stats = ref([]);
+                const isEmpty = ref(false);
+                const loading = ref(false);
+                const exporting = ref(false);
+                const topTracks = ref([]);
+                const topArtists = ref([]);
+                const recentPlays = ref([]);
+                const dailyChart = ref(null);
+                const hourlyChart = ref(null);
+                let dailyChartInstance = null;
+                let hourlyChartInstance = null;
+
+                const setDateRange = (preset) => {
+                    const today = new Date();
+                    const endDateObj = new Date(today);
+                    let startDateObj = new Date(today);
+                    
+                    if (preset === 'yesterday') {
+                        startDateObj.setDate(today.getDate() - 1);
+                        endDateObj.setDate(today.getDate() - 1);
+                    } else if (preset === 'today') {
+                        // 保持今天
+                    } else if (preset === 'week') {
+                        startDateObj.setDate(today.getDate() - 7);
+                    } else if (preset === 'month') {
+                        startDateObj.setDate(today.getDate() - 30);
+                    }
+                    
+                    startDate.value = startDateObj.toISOString().split('T')[0];
+                    endDate.value = endDateObj.toISOString().split('T')[0];
+                    dateRange.value = [startDate.value, endDate.value];
+                    loadData();
+                };
+
+                const loadDataFromCustom = () => {
+                    if (!startDate.value || !endDate.value) {
+                        ElementPlus.ElMessage.warning('请选择开始和结束日期');
+                        return;
+                    }
+                    if (new Date(startDate.value) > new Date(endDate.value)) {
+                        ElementPlus.ElMessage.error('结束日期不能早于开始日期');
+                        return;
+                    }
+                    dateRange.value = [startDate.value, endDate.value];
+                    loadData();
+                };
+
+                const loadData = async () => {
+                    loading.value = true;
+                    const params = dateRange.value.length === 2 
+                        ? `?start_date=${dateRange.value[0]}&end_date=${dateRange.value[1]}` 
+                        : '';
+
+                    try {
+                        // 加载概览
+                        const overview = await fetch(`/api/stats/overview${params}`).then(r => r.json());
+                        isEmpty.value = overview.total_plays === 0;
+                    
+                    stats.value = [
+                        { title: '总播放次数', value: overview.total_plays, unit: '次' },
+                        { title: '总播放时长', value: overview.total_hours, unit: '小时' },
+                        { title: '完成率', value: overview.completion_rate, unit: '%' },
+                        { title: '单曲循环', value: overview.repeat_count, unit: '次' }
+                    ];
+
+                    if (isEmpty.value) {
+                        loading.value = false;
+                        return;
+                    }
+
+                    // 加载图表数据
+                    const daily = await fetch(`/api/stats/daily${params}`).then(r => r.json());
+                    const hourly = await fetch(`/api/stats/hourly${params}`).then(r => r.json());
+                    
+                    await nextTick();
+                    
+                    if (dailyChartInstance) dailyChartInstance.destroy();
+                    if (hourlyChartInstance) hourlyChartInstance.destroy();
+
+                    if (daily.length > 0) {
+                        dailyChartInstance = new Chart(dailyChart.value, {
+                            type: 'line',
+                            data: {
+                                labels: daily.map(d => d.date),
+                                datasets: [{
+                                    label: '播放次数',
+                                    data: daily.map(d => d.count),
+                                    borderColor: '#3b82f6',
+                                    backgroundColor: 'rgba(59, 130, 246, 0.1)',
+                                    tension: 0.4,
+                                    fill: true,
+                                    pointBackgroundColor: '#3b82f6',
+                                    pointBorderColor: '#fff',
+                                    pointBorderWidth: 2,
+                                    pointRadius: 4
+                                }]
+                            },
+                            options: {
+                                responsive: true,
+                                maintainAspectRatio: false,
+                                plugins: { 
+                                    legend: { display: false },
+                                    tooltip: {
+                                        backgroundColor: 'rgba(0, 0, 0, 0.8)',
+                                        titleColor: '#fff',
+                                        bodyColor: '#fff',
+                                        borderColor: '#3b82f6',
+                                        borderWidth: 1
+                                    }
+                                },
+                                scales: {
+                                    y: {
+                                        grid: { color: 'rgba(255, 255, 255, 0.1)' },
+                                        ticks: { color: '#a0a0a0' }
+                                    },
+                                    x: {
+                                        grid: { color: 'rgba(255, 255, 255, 0.05)' },
+                                        ticks: { color: '#a0a0a0' }
+                                    }
+                                }
+                            }
+                        });
+                    }
+
+                    hourlyChartInstance = new Chart(hourlyChart.value, {
+                        type: 'bar',
+                        data: {
+                            labels: hourly.map(d => d.hour + ':00'),
+                            datasets: [{
+                                label: '播放次数',
+                                data: hourly.map(d => d.count),
+                                backgroundColor: 'rgba(59, 130, 246, 0.5)',
+                                borderColor: '#3b82f6',
+                                borderWidth: 1,
+                                borderRadius: 6
+                            }]
+                        },
+                        options: {
+                            responsive: true,
+                            maintainAspectRatio: false,
+                            plugins: { 
+                                legend: { display: false },
+                                tooltip: {
+                                    backgroundColor: 'rgba(0, 0, 0, 0.8)',
+                                    titleColor: '#fff',
+                                    bodyColor: '#fff',
+                                    borderColor: '#667eea',
+                                    borderWidth: 1
+                                }
+                            },
+                            scales: {
+                                y: {
+                                    grid: { color: 'rgba(255, 255, 255, 0.1)' },
+                                    ticks: { color: '#a0a0a0' }
+                                },
+                                x: {
+                                    grid: { color: 'rgba(255, 255, 255, 0.05)' },
+                                    ticks: { color: '#a0a0a0' }
+                                }
+                            }
+                        }
+                    });
+
+                    // 加载列表数据
+                    topTracks.value = await fetch(`/api/stats/top-tracks${params}`).then(r => r.json());
+                    topArtists.value = await fetch(`/api/stats/top-artists${params}`).then(r => r.json());
+                    recentPlays.value = await fetch(`/api/stats/recent${params}`).then(r => r.json());
+                    
+                    ElementPlus.ElMessage.success('数据加载成功');
+                    } catch (error) {
+                        console.error('加载数据失败:', error);
+                        ElementPlus.ElMessage.error('数据加载失败，请稍后重试');
+                    } finally {
+                        loading.value = false;
+                    }
+                };
+
+                const exportImage = async () => {
+                    exporting.value = true;
+                    try {
+                        const element = document.querySelector('.max-w-7xl');
+                        const canvas = await html2canvas(element, {
+                            backgroundColor: '#000000',
+                            scale: 2,
+                            logging: false,
+                            useCORS: true
+                        });
+                        
+                        const link = document.createElement('a');
+                        const dateStr = dateRange.value.length === 2 
+                            ? `${dateRange.value[0]}_${dateRange.value[1]}`
+                            : new Date().toISOString().split('T')[0];
+                        link.download = `ListenD_${dateStr}.png`;
+                        link.href = canvas.toDataURL('image/png');
+                        link.click();
+                        
+                        ElementPlus.ElMessage.success('截图已保存');
+                    } catch (error) {
+                        console.error('导出失败:', error);
+                        ElementPlus.ElMessage.error('导出失败，请稍后重试');
+                    } finally {
+                        exporting.value = false;
+                    }
+                };
+
+                onMounted(() => {
+                    setDateRange('today');
+                });
+
+                return {
+                    dateRange,
+                    startDate,
+                    endDate,
+                    stats,
+                    isEmpty,
+                    loading,
+                    exporting,
+                    topTracks,
+                    topArtists,
+                    recentPlays,
+                    dailyChart,
+                    hourlyChart,
+                    setDateRange,
+                    loadData,
+                    loadDataFromCustom,
+                    exportImage
+                };
+            }
+        }).use(ElementPlus).mount('#app');
+    </script>
+</body>
+</html>
