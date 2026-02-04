@@ -33,7 +33,7 @@ ListenD 是一个专为 macOS 设计的音乐播放监听与统计工具，能�
 
 ## 🖼️ 界面预览
 
-> ![界面预览](https://private-user-images.githubusercontent.com/72985580/544838246-edb522e5-be44-4096-970a-65601a3637d7.png?jwt=eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpc3MiOiJnaXRodWIuY29tIiwiYXVkIjoicmF3LmdpdGh1YnVzZXJjb250ZW50LmNvbSIsImtleSI6ImtleTUiLCJleHAiOjE3NzAxOTUyMjMsIm5iZiI6MTc3MDE5NDkyMywicGF0aCI6Ii83Mjk4NTU4MC81NDQ4MzgyNDYtZWRiNTIyZTUtYmU0NC00MDk2LTk3MGEtNjU2MDFhMzYzN2Q3LnBuZz9YLUFtei1BbGdvcml0aG09QVdTNC1ITUFDLVNIQTI1NiZYLUFtei1DcmVkZW50aWFsPUFLSUFWQ09EWUxTQTUzUFFLNFpBJTJGMjAyNjAyMDQlMkZ1cy1lYXN0LTElMkZzMyUyRmF3czRfcmVxdWVzdCZYLUFtei1EYXRlPTIwMjYwMjA0VDA4NDg0M1omWC1BbXotRXhwaXJlcz0zMDAmWC1BbXotU2lnbmF0dXJlPWVlM2FjMDgwNWUxOWZmMGUyNjFmMzVlZjY1YjRkYjJmMTc5ZGVlMTlmMmY4NzI2NGI2NGFkNmNkODE2MGVmODYmWC1BbXotU2lnbmVkSGVhZGVycz1ob3N0In0.MGQyitisxVp58EF5TcroF7wKBZ1-6KZTKah-LIdqSYU)
+> ![界面预览](https://github.com/user-attachments/assets/edb522e5-be44-4096-970a-65601a3637d7)
 
 ## 🚀 快速开始
 
