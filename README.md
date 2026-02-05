@@ -47,7 +47,7 @@ ListenD 是一个专为 macOS 设计的音乐播放监听与统计工具，能�
 
 ```bash
 # 克隆项目
-git clone https://github.com/yourusername/listend.git
+git clone https://github.com/ttumetai/ListenD.git
 cd listend
 
 # 安装依赖
