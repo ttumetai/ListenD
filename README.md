@@ -162,8 +162,6 @@ ListenD/
 ├── db/                     # 数据库文件
 │   └── music_history.db
 ├── logs/                   # 日志文件
-├── Dockerfile              # Docker 镜像
-├── docker-compose.yml      # Docker 编排
 └── README.md
 ```
 
@@ -200,23 +198,6 @@ CREATE TABLE play_history (
 );
 ```
 
-## 🐳 Docker 部署
-
-> ⚠️ 注意：监听服务（main.py）依赖 macOS 系统，无法在 Docker 中运行。Docker 部署仅用于 Web 统计界面。
-
-```bash
-# 构建并启动
-docker-compose up -d
-
-# 查看日志
-docker-compose logs -f
-
-# 停止服务
-docker-compose down
-```
-
-详见 [DOCKER.md](DOCKER.md)
-
 ## 🔐 后台服务
 
 ### 方式一：使用 LaunchAgent（推荐）
@@ -233,6 +214,19 @@ docker-compose down
 - ✅ 后台静默运行
 - ✅ 记录日志到 `logs/` 目录
 
+#### 关闭/卸载服务
+
+```bash
+# 方式一：完全卸载（推荐）
+./uninstall_service.sh
+
+# 方式二：临时停止（重启后会自动启动）
+launchctl unload ~/Library/LaunchAgents/com.listend.monitor.plist
+
+# 重新启动服务
+launchctl load ~/Library/LaunchAgents/com.listend.monitor.plist
+```
+
 #### 管理服务
 
 ```bash
@@ -244,15 +238,6 @@ tail -f logs/monitor.log
 
 # 查看错误日志
 tail -f logs/monitor.error.log
-
-# 停止服务
-launchctl unload ~/Library/LaunchAgents/com.listend.monitor.plist
-
-# 启动服务
-launchctl load ~/Library/LaunchAgents/com.listend.monitor.plist
-
-# 卸载服务
-./uninstall_service.sh
 ```
 
 ### 方式二：使用 nohup
